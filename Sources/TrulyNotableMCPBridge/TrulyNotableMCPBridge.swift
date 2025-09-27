@@ -6,7 +6,7 @@
 
 import ArgumentParser
 import Foundation
-import MCP
+import Logging
 
 @main
 struct TrulyNotableMCPBridge: AsyncParsableCommand {
@@ -26,27 +26,22 @@ struct TrulyNotableMCPBridge: AsyncParsableCommand {
     var verbose: Bool = false
 
     func run() async throws {
-        let endpoint = URL(string: "http://\(host):\(port)/mcp")!
-
-        if verbose {
-            print("TrulyNotable MCP Bridge v1.0.0")
-            print("Connecting to: \(endpoint)")
+        // Configure logging once
+        LoggingSystem.bootstrap { label in
+            var handler = StreamLogHandler.standardOutput(label: label)
+            handler.logLevel = verbose ? .debug : .error
+            return handler
         }
 
-        // Initialize transports
-        let httpTransport = HTTPClientTransport(endpoint: endpoint)
-        let stdioTransport = StdioTransport()
+        let logger = Logger(label: "mcp-bridge.main")
+        logger.info("TrulyNotable MCP Bridge starting...")
 
-        // Create MCP client for HTTP connection
-        let client = Client(
-            name: "TrulyNotable Bridge Client",
-            version: "1.0.0"
-        )
-
-        // TODO: Implement bridge proxy logic
-        print("Bridge starting... (implementation pending)")
-
-        // Keep alive for now
-        try await Task.sleep(for: .seconds(1))
+        do {
+            let bridge = MCPBridge(host: host, port: port)
+            try await bridge.start()
+        } catch {
+            logger.error("Bridge startup failed: \(error)")
+            throw error
+        }
     }
 }
