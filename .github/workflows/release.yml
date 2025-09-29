@@ -1,0 +1,99 @@
+# .github/workflows/release.yml
+name: Build and Release MCPB
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (without v prefix)'
+        required: true
+        type: string
+
+jobs:
+  build-bundle:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v2
+      with:
+        swift-version: '6.0'
+    
+    - name: Extract Version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install mcpb CLI
+      run: npm install -g @anthropic-ai/mcpb
+
+    - name: Build Swift Bridge
+      run: |
+        # Build for release (GitHub Actions runners are arm64 for macos-latest)
+        swift build -c release --product mcp-bridge
+
+        # Show architecture info
+        file .build/release/mcp-bridge
+        lipo -info .build/release/mcp-bridge || true
+        
+    - name: Update Manifest Version
+      run: |
+        # Use a more reliable JSON update approach
+        VERSION="${{ steps.version.outputs.VERSION }}"
+        cat manifest.json | python3 -c "import sys, json; data = json.load(sys.stdin); data['version'] = '$VERSION'; print(json.dumps(data, indent=2))" > manifest.tmp.json
+        mv manifest.tmp.json manifest.json
+        
+    - name: Validate Manifest
+      run: mcpb validate manifest.json
+
+    - name: Create Bundle
+      run: |
+        chmod +x build-mcpb.sh
+        ./build-mcpb.sh ${{ steps.version.outputs.VERSION }}
+        
+    - name: Upload Bundle Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: trulynotable-mcp-bridge-${{ steps.version.outputs.VERSION }}
+        path: trulynotable-mcp-bridge-${{ steps.version.outputs.VERSION }}.mcpb
+        
+    - name: Create GitHub Release
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: trulynotable-mcp-bridge-${{ steps.version.outputs.VERSION }}.mcpb
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+        name: Release v${{ steps.version.outputs.VERSION }}
+        body: |
+          ## Truly Notable MCP Bridge v${{ steps.version.outputs.VERSION }}
+
+          ### Installation
+
+          1. Download the `.mcpb` bundle file
+          2. Install using Claude Desktop or your MCP client
+          3. Configure port and host if needed (defaults to 127.0.0.1:3001)
+
+          ### Requirements
+
+          - macOS (Intel or Apple Silicon)
+          - Truly Notable app with MCP server enabled
+
+          See the [README](https://github.com/${{ github.repository }}/blob/main/README.md) for detailed setup instructions.

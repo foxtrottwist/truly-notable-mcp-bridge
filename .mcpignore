@@ -1,0 +1,17 @@
+# Development files
+.git/
+.github/
+.gitignore
+.mcpbignore
+README.md
+build-mcpb.sh
+
+# Swift build artifacts
+.build/
+Packages/
+.swiftpm/
+xcuserdata/
+DerivedData/
+
+# macOS
+.DS_Store

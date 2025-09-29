@@ -1,0 +1,89 @@
+{
+  "manifest_version": "0.2",
+  "name": "trulynotable-mcp-bridge",
+  "display_name": "Truly Notable",
+  "version": "1.0.0",
+  "description": "MCP bridge for Truly Notable note-taking app.",
+  "long_description": "Connects Claude to your local Truly Notable app through a high-performance Swift MCP bridge, enabling note creation, retrieval, intelligent search, and AI-extracted metadata access. Requires Truly Notable app installed with MCP server enabled.",
+  "author": {
+    "name": "Law Horne",
+    "email": "hello@foxtrottwist.com",
+    "url": "https://trulynotable.com"
+  },
+  "server": {
+    "type": "binary",
+    "entry_point": "mcp-bridge",
+    "mcp_config": {
+      "command": "${__dirname}/mcp-bridge",
+      "args": [
+        "--port",
+        "${user_config.port}",
+        "--host",
+        "${user_config.host}"
+      ],
+      "env": {}
+    }
+  },
+  "user_config": {
+    "port": {
+      "type": "number",
+      "title": "TrulyNotable Server Port",
+      "description": "Port where your TrulyNotable server is running",
+      "default": 3001,
+      "min": 1024,
+      "max": 65535,
+      "required": false
+    },
+    "host": {
+      "type": "string",
+      "title": "TrulyNotable Server Host",
+      "description": "Host address of your TrulyNotable server",
+      "default": "127.0.0.1",
+      "required": false
+    }
+  },
+  "tools": [
+    {
+      "name": "create_note",
+      "description": "Create a new note with optional content and AI metadata extraction"
+    },
+    {
+      "name": "get_note",
+      "description": "Retrieve a specific note by ID with full content and metadata"
+    },
+    {
+      "name": "search_notes",
+      "description": "Search notes by content with AI-aware relevance scoring"
+    },
+    {
+      "name": "get_note_metadata",
+      "description": "Get AI-extracted metadata including entities, tasks, and relationships"
+    },
+    {
+      "name": "list_recent_notes",
+      "description": "List recently modified notes with metadata indicators"
+    }
+  ],
+  "keywords": [
+    "mcp",
+    "notes",
+    "ai-metadata",
+    "privacy-first",
+    "swift",
+    "bridge",
+    "local-processing"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/foxtrottwist/trulynotable-mcp-bridge"
+  },
+  "homepage": "https://github.com/foxtrottwist/trulynotable-mcp-bridge",
+  "documentation": "https://github.com/foxtrottwist/trulynotable-mcp-bridge#readme",
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": [
+      "darwin"
+    ]
+  }
+}
