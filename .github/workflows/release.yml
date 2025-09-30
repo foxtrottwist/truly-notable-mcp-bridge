@@ -3,6 +3,8 @@ name: Build and Release MCPB
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*.*.*'
   workflow_dispatch:
@@ -30,10 +32,15 @@ jobs:
       id: version
       run: |
         if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          VERSION="${{ github.event.inputs.version }}"
+        elif [ "${{ github.event_name }}" == "push" ] && [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          VERSION="${GITHUB_REF#refs/tags/v}"
         else
-          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          # Extract version from manifest.json
+          VERSION=$(python3 -c "import json; print(json.load(open('manifest.json'))['version'])")
         fi
+        echo "Extracted version: $VERSION"
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -52,12 +59,50 @@ jobs:
         file .build/release/mcp-bridge
         lipo -info .build/release/mcp-bridge || true
         
-    - name: Update Manifest Version
+    - name: Check if version changed
+      id: version_check
       run: |
-        # Use a more reliable JSON update approach
         VERSION="${{ steps.version.outputs.VERSION }}"
-        cat manifest.json | python3 -c "import sys, json; data = json.load(sys.stdin); data['version'] = '$VERSION'; print(json.dumps(data, indent=2))" > manifest.tmp.json
-        mv manifest.tmp.json manifest.json
+
+        # Get latest tag version (if any)
+        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        if [ -n "$LATEST_TAG" ]; then
+          LATEST_VERSION=${LATEST_TAG#v}
+        else
+          LATEST_VERSION="0.0.0"
+        fi
+
+        echo "Current manifest version: $VERSION"
+        echo "Latest tag version: $LATEST_VERSION"
+
+        if [ "$VERSION" != "$LATEST_VERSION" ]; then
+          echo "VERSION_CHANGED=true" >> $GITHUB_OUTPUT
+          echo "Version changed from $LATEST_VERSION to $VERSION"
+        else
+          echo "VERSION_CHANGED=false" >> $GITHUB_OUTPUT
+          echo "Version unchanged: $VERSION"
+        fi
+
+    - name: Create tag for new version
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.version_check.outputs.VERSION_CHANGED == 'true'
+      run: |
+        VERSION="${{ steps.version.outputs.VERSION }}"
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag "v$VERSION" -m "Release v$VERSION"
+        git push origin "v$VERSION"
+        echo "Created and pushed tag v$VERSION"
+
+    - name: Skip build if version unchanged
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.version_check.outputs.VERSION_CHANGED == 'false'
+      run: |
+        echo "Version unchanged - skipping build"
+        exit 0
+
+    - name: Continue to build after creating tag
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.version_check.outputs.VERSION_CHANGED == 'true'
+      run: |
+        echo "Tag was created. Continuing with build in same workflow run."
         
     - name: Validate Manifest
       run: mcpb validate manifest.json
@@ -66,7 +111,7 @@ jobs:
       run: |
         chmod +x build-mcpb.sh
         ./build-mcpb.sh ${{ steps.version.outputs.VERSION }}
-        
+
     - name: Upload Bundle Artifact
       uses: actions/upload-artifact@v4
       with:
@@ -74,9 +119,10 @@ jobs:
         path: trulynotable-mcp-bridge-${{ steps.version.outputs.VERSION }}.mcpb
         
     - name: Create GitHub Release
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.version_check.outputs.VERSION_CHANGED == 'true')
       uses: softprops/action-gh-release@v2
       with:
+        tag_name: v${{ steps.version.outputs.VERSION }}
         files: trulynotable-mcp-bridge-${{ steps.version.outputs.VERSION }}.mcpb
         generate_release_notes: true
         draft: false
