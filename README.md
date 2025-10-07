@@ -16,7 +16,7 @@ A Swift MCP bridge that connects stdio-based MCP clients like Claude Desktop to 
 
 **Note**: The `.mcpb` bundle format is specific to Claude Desktop. Other MCP clients should use Option 2 below.
 
-1. Download the latest `.mcpb` file from [Releases](https://github.com/foxtrottwist/trulynotable-mcp-bridge/releases)
+1. Download the latest `.mcpb` file from [Releases](https://github.com/foxtrottwist/truly-notable-mcp-bridge/releases)
 2. Double-click the .mcpb file or drag it onto Claude Desktop
 3. Click "Install" in the Claude Desktop UI
 4. Restart Claude Desktop
@@ -24,7 +24,7 @@ A Swift MCP bridge that connects stdio-based MCP clients like Claude Desktop to 
 ### Option 2: Manual Build
 
 ```bash
-git clone https://github.com/foxtrottwist/trulynotable-mcp-bridge.git
+git clone https://github.com/foxtrottwist/truly-notable-mcp-bridge.git
 cd trulynotable-mcp-bridge
 swift build -c release --product TrulyNotableMCPBridge
 ./build-mcpb.sh

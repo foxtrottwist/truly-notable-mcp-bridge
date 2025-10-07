@@ -1,14 +1,14 @@
 {
   "manifest_version": "0.2",
-  "name": "trulynotable-mcp-bridge",
+  "name": "truly-notable-mcp-bridge",
   "display_name": "Truly Notable",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP bridge for Truly Notable note-taking app.",
   "long_description": "Connects Claude to your local Truly Notable app through a high-performance Swift MCP bridge, enabling note creation, retrieval, intelligent search, and AI-extracted metadata access. Requires Truly Notable app installed with MCP server enabled.",
   "author": {
     "name": "Law Horne",
-    "email": "hello@foxtrottwist.com",
-    "url": "https://trulynotable.com"
+    "email": "hello@trulynotable.com",
+    "url": "https://trulynotable.app"
   },
   "server": {
     "type": "binary",
@@ -76,10 +76,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/foxtrottwist/trulynotable-mcp-bridge"
+    "url": "https://github.com/foxtrottwist/truly-notable-mcp-bridge"
   },
-  "homepage": "https://github.com/foxtrottwist/trulynotable-mcp-bridge",
-  "documentation": "https://github.com/foxtrottwist/trulynotable-mcp-bridge#readme",
+  "homepage": "https://github.com/foxtrottwist/truly-notable-mcp-bridge",
+  "documentation": "https://github.com/foxtrottwist/truly-notable-mcp-bridge#readme",
   "compatibility": {
     "claude_desktop": ">=0.10.0",
     "platforms": [

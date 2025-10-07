@@ -21,7 +21,7 @@ fi
 
 VERSION=${1:-"1.0.0"}
 BUILD_DIR="temp-mcpb-build"
-BUNDLE_NAME="trulynotable-mcp-bridge-${VERSION}.mcpb"
+BUNDLE_NAME="truly-notable-mcp-bridge-${VERSION}.mcpb"
 
 # Clean and create build directory
 rm -rf "$BUILD_DIR"

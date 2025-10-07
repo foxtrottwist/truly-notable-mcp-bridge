@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "TrulyNotableMCPBridge",
+    name: "truly-notable-mcp-bridge",
     platforms: [.macOS(.v15)],
     products: [
         .executable(name: "mcp-bridge", targets: ["TrulyNotableMCPBridge"])
